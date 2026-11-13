@@ -41,8 +41,8 @@ xcodebuild -project Moni.xcodeproj -scheme Moni -configuration Debug -derivedDat
 ## 发布版本
 
 - 完整发布说明以 `docs/RELEASING.md` 为准；任何发布方式都不得手工修改生成的 `appcast.xml`，不得移动已经发布的版本标签。
-- 没有 Developer ID 与 Apple 公证凭据时，必须使用 `scripts/publish-unsigned-release.sh <MAJOR.MINOR.PATCH>` 发布未签名版本，不得手工重复脚本中的构建、打包、签名 appcast、打标签和创建 GitHub Release 步骤。
+- 没有 Developer ID 与 Apple 公证凭据时，必须按全局技能 `mac-release` 使用共用脚本 `~/.agents/skills/mac-release/scripts/mac-release <MAJOR.MINOR.PATCH>` 发布未签名版本（Moni 的配置在 `scripts/release-config.sh`），不得手工重复脚本中的构建、打包、签名 appcast、打标签和创建 GitHub Release 步骤。
 - 运行未签名发布脚本前，必须确认当前位于 `master`、工作区干净、`HEAD` 已推送并与 `origin/master` 完全一致，`gh auth status` 有效，并且登录钥匙串内存在账户名为 `com.seaony.Moni` 的 Sparkle 私钥。
 - 发布脚本会从最新 appcast 推导递增的 bundle build number，构建 `arm64` 与 `x86_64` 通用应用，执行 ad hoc 签名，生成 ZIP、DMG 和带 EdDSA 签名的 appcast，完成验证后推送注释标签并创建 GitHub Release；产物保存在 `build/releases/vMAJOR.MINOR.PATCH/`。
-- 发布脚本不会替代源码的 commit 与 `master` push。用户要求“发版本”时，应先完成并推送当前源码提交，再运行发布脚本；若脚本在创建标签前失败，只修复已确认的失败原因，然后以同一版本号重试。
+- 发布脚本不会替代源码的 commit 与 `master` push。用户要求“发版本”时，应先完成并推送当前源码提交，再运行发布脚本；脚本中途失败时，修复已确认的失败原因后以同一条命令重跑，它会接着上次的进度。
 - 只有 Developer ID、Apple 公证和 Sparkle 所需凭据均已配置时，才使用 `vMAJOR.MINOR.PATCH` 标签触发 `.github/workflows/release.yml` 的签名发布流程。

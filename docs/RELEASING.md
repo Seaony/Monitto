@@ -70,15 +70,27 @@ If the same workflow run is retried, existing GitHub Release assets are replaced
 
 ## Publishing an unsigned release locally
 
-When Developer ID and notarization credentials are unavailable, publish the next unsigned release from a clean, fully pushed `master` branch with:
+When Developer ID and notarization credentials are unavailable, publish the next unsigned release from a clean, fully pushed `master` branch with the shared release script (global skill `mac-release`; see its `SKILL.md` for usage and retries). Moni's settings live in `scripts/release-config.sh`. Run it in the background:
 
 ```bash
-scripts/publish-unsigned-release.sh 1.2.3
+~/.agents/skills/mac-release/scripts/mac-release 1.2.3
 ```
 
-The script reads the latest published appcast to choose the next bundle build number, builds a universal `arm64` and `x86_64` application, packages ZIP and DMG artifacts, signs the appcast with the `com.seaony.Moni` Sparkle key stored in the login Keychain, validates the result, pushes the version tag, and creates the GitHub Release. Generated artifacts are retained under `build/releases/v1.2.3/`.
+Add `--dry-run` to build and validate everything without tagging or publishing.
+
+The script reads the latest published appcast to choose the next bundle build number, builds a universal `arm64` and `x86_64` application, packages ZIP and DMG artifacts, signs the appcast with the `com.seaony.Moni` Sparkle key stored in the login Keychain, validates the result, pushes the version tag, and publishes the GitHub Release (draft first, then public). Generated artifacts and `release.log` are retained under `build/releases/v1.2.3/`. If it stops halfway, rerun the same command to continue.
 
 The script intentionally does not commit source changes or push `master`. Commit and push the intended release state before running it. Do not use this path when Developer ID signing and notarization credentials are available.
+
+## DMG install window
+
+The DMG opens as a drag-to-Applications window with a background, large icons and an arrow. `scripts/dmg/` controls it: `dmg-settings.py` sets the window size, icon positions and volume icon; `background.png` and `background@2x.png` are drawn by `render-background.swift` in the icon colour `F8C960`; `render-volume-icon.swift` builds the volume icon from the 1024 px app icon. Install `dmgbuild` with `uv tool install dmgbuild`. When changing the window size or icon positions, update both files and rerun `swift scripts/dmg/render-background.swift scripts/dmg F8C960`.
+
+To preview without releasing, run from the repository root:
+
+```bash
+dmgbuild -s scripts/dmg/dmg-settings.py -D app=/path/to/Moni.app Moni /tmp/Moni-preview.dmg
+```
 
 ## Verification
 

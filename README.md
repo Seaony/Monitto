@@ -71,10 +71,10 @@ docs/          数据源审计与发布说明
 未配置 Developer ID 与 Apple 公证凭据时，可从干净且已推送的 `master` 发布未签名版本：
 
 ```bash
-scripts/publish-unsigned-release.sh 1.2.3
+~/.agents/skills/mac-release/scripts/mac-release 1.2.3
 ```
 
-脚本会构建通用应用、生成 ZIP/DMG、签名 Sparkle appcast、创建版本标签并发布 GitHub Release。完整前置条件和签名发布流程请阅读 [发布说明](docs/RELEASING.md)。
+这是所有 App 共用的发版脚本（全局技能 `mac-release`），Moni 的配置在 `scripts/release-config.sh`。脚本会构建通用应用、生成 ZIP/DMG、签名 Sparkle appcast、创建版本标签并发布 GitHub Release。完整前置条件和签名发布流程请阅读 [发布说明](docs/RELEASING.md)。
 
 ## 技术栈
 
