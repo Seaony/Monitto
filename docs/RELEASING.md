@@ -1,113 +1,121 @@
-# Moni release process
+# Monitto 发布说明
 
-Moni uses Sparkle for in-app updates and GitHub Releases for update hosting. Pushing a stable semantic-version tag such as `v1.2.3` starts the complete release workflow:
+Monitto 用 Sparkle 做应用内更新，更新文件放在 GitHub Releases。发布版本用 Developer ID 签名并经过 Apple 公证，用户下载后可以直接打开。
 
-1. Archive a universal Developer ID build.
-2. Export and verify the signed application.
-3. Submit the application to Apple notarization and staple its ticket.
-4. Create ZIP and DMG packages.
-5. Notarize and staple the DMG.
-6. Generate an EdDSA-signed Sparkle appcast.
-7. Publish the ZIP, DMG, and `appcast.xml` to the matching GitHub Release.
+发版用所有 App 共用的脚本 `~/.agents/skills/mac-release/scripts/mac-release`（全局技能 `mac-release`，用法和失败重跑见它的 `SKILL.md`）。Monitto 自己的差异写在 `scripts/release-config.sh`：用 `scripts/dmg/` 的配置打 DMG，用 `scripts/validate-release.sh` 检查产物。脚本依次：
 
-The application checks this stable feed URL:
+1. 检查分支、工作区、远端同步、GitHub 登录、签名证书、公证凭据、Sparkle 密钥和版本是否已发布。
+2. 按上一个正式 Release 的 `appcast.xml` 把 build number 加 1。
+3. 构建 `arm64` + `x86_64` 通用应用，用 Developer ID 由内到外逐个签名，开启 Hardened Runtime 并带时间戳。
+4. 用 `dmgbuild` 打 DMG 并签名，只把 DMG 交给 Apple 公证一次，通过后给 DMG 和应用装订票据。
+5. 用装订好的应用打 ZIP，生成 Release Notes 和带 EdDSA 签名的 `appcast.xml`。
+6. 推送版本标签，先建草稿 Release 上传 DMG、ZIP、`appcast.xml`，再正式发布，并核对线上更新源已指向新版本。
 
-`https://github.com/Seaony/Moni/releases/latest/download/appcast.xml`
+应用固定读取以下更新源：
 
-## One-time signing setup
-
-### Sparkle update key
-
-Resolve the Swift package once, then use Sparkle's bundled key tool:
-
-```bash
-xcodebuild -resolvePackageDependencies -project Moni.xcodeproj -scheme Moni
-SPARKLE_TOOLS="$(find ~/Library/Developer/Xcode/DerivedData/Moni-*/SourcePackages/artifacts/sparkle/Sparkle -type d -path '*/Sparkle/bin' | head -1)"
-"$SPARKLE_TOOLS/generate_keys" --account com.seaony.Moni
-"$SPARKLE_TOOLS/generate_keys" --account com.seaony.Moni -x sparkle-private-key
+```text
+https://github.com/Seaony/Monitto/releases/latest/download/appcast.xml
 ```
 
-Save the printed public key as the GitHub Actions repository variable `SPARKLE_PUBLIC_ED_KEY`.
+## 首次准备
 
-Save the contents of `sparkle-private-key` as the encrypted repository secret `SPARKLE_PRIVATE_KEY`, then securely back it up and delete the exported file. Never commit the private key. Existing installations depend on retaining this key for future updates.
-
-### Developer ID certificate
-
-Export the `Developer ID Application` certificate and private key from Keychain Access as a password-protected `.p12`. Configure these encrypted repository secrets:
-
-- `DEVELOPER_ID_APPLICATION_P12`: Base64 representation of the `.p12` file.
-- `DEVELOPER_ID_APPLICATION_PASSWORD`: Password used when exporting the `.p12`.
-- `KEYCHAIN_PASSWORD`: A new random password used only for the temporary CI keychain.
-
-Generate the first value with:
+需要安装并登录 GitHub CLI：
 
 ```bash
-base64 -i DeveloperIDApplication.p12 | pbcopy
+gh auth login
+gh auth status
 ```
 
-### Apple notarization API key
+本机还需要 Xcode、Command Line Tools，以及以下命令：
 
-Create an App Store Connect API key with access to notarization and configure:
+```text
+gh xcodebuild ditto hdiutil xmllint lipo codesign dmgbuild xcrun spctl
+```
 
-- `APPLE_API_KEY_P8`: Complete contents of the `AuthKey_….p8` file.
-- `APPLE_API_KEY_ID`: API key identifier.
-- `APPLE_API_ISSUER_ID`: API issuer identifier.
-
-The workflow removes the temporary certificate, API key, and keychain even when a release fails.
-
-## Publishing a release
-
-Before tagging, ensure the intended release commit is on `master` and the Build workflow succeeds. Create and push an annotated tag:
+登录钥匙串里要有 Developer ID Application 证书。脚本默认用 `Developer ID Application: SHEN WANG (JJJKGPY7T7)`，换证书时在 `scripts/release-config.sh` 里设置 `SIGN_IDENTITY`。确认证书在：
 
 ```bash
-git tag -a v1.2.3 -m "Moni 1.2.3"
-git push origin v1.2.3
+security find-identity -v -p codesigning
 ```
 
-Only tags matching `vMAJOR.MINOR.PATCH` pass release validation. `MARKETING_VERSION` is derived from the tag and `CFBundleVersion` uses the monotonically increasing GitHub Actions run number.
-
-If the same workflow run is retried, existing GitHub Release assets are replaced. A different commit must use a new version tag; published version tags must not be moved.
-
-## Publishing an unsigned release locally
-
-When Developer ID and notarization credentials are unavailable, publish the next unsigned release from a clean, fully pushed `master` branch with the shared release script (global skill `mac-release`; see its `SKILL.md` for usage and retries). Moni's settings live in `scripts/release-config.sh`. Run it in the background:
+公证凭据只需要存一次。去 [appleid.apple.com](https://appleid.apple.com) 生成一个 App 专用密码，然后运行下面的命令，按提示填 Apple ID 和这个密码：
 
 ```bash
-~/.agents/skills/mac-release/scripts/mac-release 1.2.3
+xcrun notarytool store-credentials notary --team-id JJJKGPY7T7
 ```
 
-Add `--dry-run` to build and validate everything without tagging or publishing.
+脚本默认读取名为 `notary` 的凭据，换名字时在 `scripts/release-config.sh` 里设置 `NOTARY_PROFILE`。凭据不能用时，脚本会在开始构建前停下。
 
-The script reads the latest published appcast to choose the next bundle build number, builds a universal `arm64` and `x86_64` application, packages ZIP and DMG artifacts, signs the appcast with the `com.seaony.Moni` Sparkle key stored in the login Keychain, validates the result, pushes the version tag, and publishes the GitHub Release (draft first, then public). Generated artifacts and `release.log` are retained under `build/releases/v1.2.3/`. If it stops halfway, rerun the same command to continue.
-
-The script intentionally does not commit source changes or push `master`. Commit and push the intended release state before running it. Do not use this path when Developer ID signing and notarization credentials are available.
-
-## DMG install window
-
-The DMG opens as a drag-to-Applications window with a background, large icons and an arrow. `scripts/dmg/` controls it: `dmg-settings.py` sets the window size, icon positions and volume icon; `background.png` and `background@2x.png` are drawn by `render-background.swift` in the icon colour `F8C960`; `render-volume-icon.swift` builds the volume icon from the 1024 px app icon. Install `dmgbuild` with `uv tool install dmgbuild`. When changing the window size or icon positions, update both files and rerun `swift scripts/dmg/render-background.swift scripts/dmg F8C960`.
-
-To preview without releasing, run from the repository root:
+`dmgbuild` 用 uv 安装：
 
 ```bash
-dmgbuild -s scripts/dmg/dmg-settings.py -D app=/path/to/Moni.app Moni /tmp/Moni-preview.dmg
+uv tool install dmgbuild
 ```
 
-## Verification
-
-The workflow verifies all of the following before publishing:
-
-- Sparkle public key and HTTPS feed configuration.
-- Sparkle framework embedding.
-- Strict nested code signatures.
-- Universal `arm64` and `x86_64` application binary.
-- Apple notarization and stapled tickets for the app and DMG.
-- Gatekeeper assessment.
-- Well-formed appcast XML with an EdDSA archive signature and GitHub asset URL.
-
-For an already exported release build, run:
+Sparkle 的 EdDSA 私钥在登录钥匙串里，和 CodeEdge、Diskit、Mekke 共用账户 `com.seaony.Moni`（脚本默认读取它），对应的公钥写在工程的 `SPARKLE_PUBLIC_ED_KEY` 里。确认私钥在：
 
 ```bash
-scripts/validate-release.sh /path/to/Moni.app /path/to/appcast.xml
+security find-generic-password -a com.seaony.Moni -s https://sparkle-project.org
 ```
 
-Do not hand-edit a generated appcast. Regenerate it so signed-feed and release-note signatures remain valid.
+Sparkle 的 EdDSA 签名和 Developer ID 签名、公证是两套独立的校验，缺一不可。
+
+## DMG 安装窗口
+
+DMG 的外观由 `scripts/dmg/` 决定：
+
+- `dmg-settings.py`：窗口大小、隐藏工具栏和侧边栏、图标大小和位置、卷图标。
+- `background.png` / `background@2x.png`：窗口背景，由 `render-background.swift` 按图标主色 `FD6A2C` 生成。
+- `render-volume-icon.swift`：打包时自动运行，把 1024 的满版 App 图标裁成标准圆角，作为挂载后的卷图标。
+
+改了窗口尺寸或图标位置时，两个文件里的数值要一起改，然后重新生成背景：
+
+```bash
+swift scripts/dmg/render-background.swift scripts/dmg FD6A2C
+```
+
+不发版、只看效果时，可以拿任意一个构建好的 `Monitto.app` 打一个预览：
+
+```bash
+dmgbuild -s scripts/dmg/dmg-settings.py -D app=DerivedData/Build/Products/Debug/Monitto.app Monitto /tmp/Monitto-preview.dmg
+open /tmp/Monitto-preview.dmg
+```
+
+## 发布新版本
+
+发布前先把准备发布的内容 commit 并推送到 `origin/master`，确保工作区完全干净。然后在仓库根目录后台运行，只传入三段式版本号：
+
+```bash
+~/.agents/skills/mac-release/scripts/mac-release 1.0.0
+```
+
+加 `--dry-run` 只试跑：完整构建、公证、生成产物并验证，不打标签、不发布。
+
+某一版需要额外提醒用户时，用 `RELEASE_NOTE` 追加一段说明，它会出现在 GitHub Release 和 Sparkle 更新窗口里：
+
+```bash
+RELEASE_NOTE="……" ~/.agents/skills/mac-release/scripts/mac-release 1.0.0
+```
+
+脚本不会 commit，也不会推送 `master`。中途失败（断网、公证等太久被打断）时原样重跑同一条命令：同一提交的产物会接着用，已提交的公证按 `notary-id` 接着等，不会重新上传。
+
+本地产物和日志保存在 `build/releases/v<版本号>/`：
+
+```text
+Monitto-1.0.0.zip
+Monitto-1.0.0.dmg
+appcast.xml
+notes.md
+release.log
+stage/Monitto.app
+```
+
+需要单独复查时：
+
+```bash
+scripts/validate-release.sh \
+  build/releases/v1.0.0/stage/Monitto.app \
+  build/releases/v1.0.0/appcast.xml
+```
+
+不要手工修改生成的 `appcast.xml`，已经发布的版本标签不能移动。

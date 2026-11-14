@@ -1,7 +1,7 @@
 "English" = "英文";
 "Chinese" = "中文";
 "Language" = "语言";
-"Changes the language across Moni, the menu bar, and notifications." = "切换 Moni、菜单栏和通知的显示语言。";
+"Changes the language across Monitto, the menu bar, and notifications." = "切换 Monitto、菜单栏和通知的显示语言。";
 
 "Summary" = "概览";
 "Memory Pressure" = "内存压力";
@@ -25,7 +25,7 @@
 "Refresh" = "刷新";
 "Refresh now" = "立即刷新";
 "Quit" = "退出";
-"Quit Moni" = "退出 Moni";
+"Quit Monitto" = "退出 Monitto";
 "Check for Updates…" = "检查更新…";
 "Check for updates" = "检查更新";
 "Export diagnostics…" = "导出诊断信息…";
@@ -48,11 +48,11 @@
 "Scales the entire pop-up window. The default size is 1.0×." = "缩放整个弹出窗口，默认比例为 1.0×。";
 "Behavior" = "行为";
 "Launch at login" = "登录时启动";
-"Start Moni when you log in" = "登录 macOS 时启动 Moni";
+"Start Monitto when you log in" = "登录 macOS 时启动 Monitto";
 "Threshold alerts" = "阈值提醒";
 "Notify when a limit below is crossed" = "指标超过下方阈值时通知";
 "Show Dock icon" = "显示 Dock 图标";
-"Off keeps Moni menu-bar only" = "关闭后 Moni 仅显示在菜单栏";
+"Off keeps Monitto menu-bar only" = "关闭后 Monitto 仅显示在菜单栏";
 "Compact menu bar" = "紧凑菜单栏";
 "Show only the first selected item" = "仅显示第一个已选项目";
 "Preview" = "预览";

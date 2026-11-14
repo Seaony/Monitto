@@ -18,7 +18,7 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     }
 }
 
-enum MoniLocalization {
+enum MonittoLocalization {
     nonisolated static let preferenceKey = "appLanguage"
 
     nonisolated static var currentLanguage: AppLanguage {

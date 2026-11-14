@@ -1,4 +1,4 @@
-# Moni 数据源审计清单
+# Monitto 数据源审计清单
 
 审计日期：2026-08-27
 
@@ -25,7 +25,7 @@
 | 逻辑 CPU 数 | `ProcessInfo.processorCount` | A | 官方公开接口，继续使用。 |
 | 开机时长 | `ProcessInfo.systemUptime` | A | 官方公开接口；为单调系统运行时长。 |
 | 1/5/15 分钟负载 | `getloadavg` | B | 标准系统负载平均值，不是 CPU 百分比；现有 tooltip 应维持该解释。 |
-| 进程总数 | 成功读取的 `proc_listallpids` 结果数 | D | 是“Moni 当前可读取的进程数”，权限受限进程可能不完整。 |
+| 进程总数 | 成功读取的 `proc_listallpids` 结果数 | D | 是“Monitto 当前可读取的进程数”，权限受限进程可能不完整。 |
 | 内存容量 | `ProcessInfo.physicalMemory` | A | 官方公开接口。 |
 | 存储容量 | 根卷 `URLResourceValues.volumeTotalCapacity` | A | 官方公开接口。 |
 | 屏幕物理尺寸 | `CGDisplayScreenSize` 的毫米对角线换算 | A/D | 公开接口；显示器未提供物理尺寸时可能为空，不能用像素分辨率冒充英寸。 |
@@ -55,7 +55,7 @@
 | --- | --- | --- | --- |
 | Total | `ProcessInfo.physicalMemory` | A | 官方公开接口。 |
 | Free | `HOST_VM_INFO64.free_count × pageSize` | A/D | 定义正确。 |
-| Cached | `(inactive_count + speculative_count) × pageSize` | A/D | 是 Moni 的“可回收缓存”口径，不等同于 Activity Monitor 的 Cached Files 精确实现。 |
+| Cached | `(inactive_count + speculative_count) × pageSize` | A/D | 是 Monitto 的“可回收缓存”口径，不等同于 Activity Monitor 的 Cached Files 精确实现。 |
 | Used | `Total - Free - Cached` | D | 是应用定义的实际占用口径；不能称作 Memory Pressure。 |
 | Used % | `Used / Total` | D | 计算正确。 |
 | Wired | `wire_count × pageSize` | A/D | 计算正确。 |
@@ -126,7 +126,7 @@
 | CPU/GPU/ANE/RAM 功率 | Apple Silicon IOReport 能量计数差 / 时间 | C/D | 私有采样；没有等价公开 API。 |
 | CPU/GPU 温度及全部传感器 | IOHIDEventSystemClient，M3 回退到 SMC 键 | C | 私有传感器名称可能变化；已有 0–110°C 合理值过滤。 |
 | 风扇转速 | SMC `FNum/FxAc` | C | 私有 SMC 键；无风扇设备返回空值。 |
-| 温度/电池历史图 | 上述当前值样本序列 | D | 只包含 Moni 运行期间的数据。 |
+| 温度/电池历史图 | 上述当前值样本序列 | D | 只包含 Monitto 运行期间的数据。 |
 
 官方依据：[IOKit Power Sources](https://developer.apple.com/documentation/iokit/kiopscurrentcapacitykey)、[time to empty](https://developer.apple.com/documentation/iokit/kiopstimetoemptykey)。
 

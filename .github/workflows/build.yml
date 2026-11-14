@@ -28,8 +28,8 @@ jobs:
         run: |
           set -euo pipefail
           xcodebuild \
-            -project Moni.xcodeproj \
-            -scheme Moni \
+            -project Monitto.xcodeproj \
+            -scheme Monitto \
             -configuration Debug \
             -destination 'platform=macOS' \
             CODE_SIGNING_ALLOWED=NO \

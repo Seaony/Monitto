@@ -1,90 +1,68 @@
 <div align="center">
-  <img src="Moni/Assets.xcassets/AppIcon.appiconset/AppIcon-128@2x.png" width="128" height="128" alt="Moni 图标">
-  <h1>Moni</h1>
-  <p>一眼看清 Mac 状态。</p>
+  <img src="Monitto/Assets.xcassets/AppIcon.appiconset/AppIcon-128@2x.png" width="128" height="128" alt="Monitto 图标">
+  <h1>Monitto</h1>
+  <p>点一下菜单栏，看清这台 Mac 现在的状态。</p>
   <p>
-    <a href="https://github.com/Seaony/Moni/actions/workflows/build.yml"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/Seaony/Moni/build.yml?branch=master&amp;style=flat-square&amp;label=build"></a>
-    <a href="https://github.com/Seaony/Moni/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/Seaony/Moni?display_name=tag&amp;style=flat-square"></a>
+    <a href="https://github.com/Seaony/Monitto/actions/workflows/build.yml"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/Seaony/Monitto/build.yml?branch=master&amp;style=flat-square&amp;label=build"></a>
+    <a href="https://github.com/Seaony/Monitto/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/Seaony/Monitto?display_name=tag&amp;style=flat-square"></a>
     <img alt="macOS 26.5+" src="https://img.shields.io/badge/macOS-26.5%2B-111111?style=flat-square&amp;logo=apple">
     <img alt="Swift 5" src="https://img.shields.io/badge/Swift-5-F05138?style=flat-square&amp;logo=swift&amp;logoColor=white">
   </p>
 </div>
 
-Moni 是一款使用 SwiftUI 与 AppKit 构建的 macOS 菜单栏监控应用。它把系统状态、进程、网络与存储收进一个紧凑、可定制的首页，并提供菜单栏指标。
+Monitto 是一个 macOS 菜单栏 App。CPU、内存、GPU、网络、磁盘、进程、电池和温度都收在一个弹出面板里，最关心的几项也可以直接挂在菜单栏上。
 
-## 功能亮点
+## 能做什么
 
-- **完整系统概览**：主机、CPU、内存、GPU、网络、存储、进程、电池、温度、风扇与功耗。
-- **可交互图表**：首页图表支持悬停定位和数值说明。
-- **自由编排首页**：卡片支持拖拽排序和尺寸调整，布局与显示模块会持久保存。
-- **自定义菜单栏**：可组合 CPU、内存、网络、磁盘、电池和温度，并选择数值、图表或图表加数值。
-- **贴合系统体验**：支持 System、Dark、Light 三种外观，支持英文与简体中文，并可调整整个弹出窗口的缩放比例。
-- **本地优先采样**：系统数据复用统一快照；昂贵采样按页面可见性降频或暂停。
+- **首页概览**：主机信息、CPU、内存、GPU、网络、存储、进程，以及电池、温度、风扇转速和功耗。鼠标停在图表上能看到具体数值和说明。
+- **自己排首页**：卡片可以拖动排序、调整大小，不看的模块可以关掉，布局会记住。
+- **菜单栏指标**：从 CPU、内存、网络、磁盘、电池、温度里任选几项，显示成数值、小图表或两者都显示。
+- **超限提醒**：CPU、内存、磁盘用量或 CPU 温度超过你设的阈值时，发系统通知或播放提示音。
+- **外观和语言**：浅色、深色或跟随系统；界面有英文和简体中文；整个面板可以缩放。
+- **不费电**：所有数据共用一次采样，开销大的采样在面板关闭时降频或暂停。
 
 ## 安装
 
-从 [最新版本](https://github.com/Seaony/Moni/releases/latest) 下载 DMG，将 `Moni.app` 拖入 Applications 后启动。
+从 [Releases](https://github.com/Seaony/Monitto/releases/latest) 下载 DMG，打开后把 Monitto 拖进「应用程序」。安装包用 Developer ID 签名并经过 Apple 公证，可以直接打开；有新版本时 App 里会提示更新。
 
-当前公开下载包为未使用 Apple Developer ID 签名、未经过 Apple 公证的构建。首次打开时，如果 macOS 阻止运行，请前往 **系统设置 → 隐私与安全性**，确认打开 Moni。
+需要 macOS 26.5 或更新版本，Apple 芯片和 Intel 芯片的 Mac 都能用。
 
-发布包同时支持 Apple silicon 与 Intel Mac，最低系统版本为 macOS 26.5。
+## 用法
 
-## 使用方式
-
-1. 从菜单栏打开 Moni，首页会显示已启用的监控卡片。
-2. 悬停首页图表或关键数值，可查看解释和精确数据。
-3. 在弹窗内按 `⌘,` 打开设置，可调整语言、主题、采样间隔、窗口缩放、菜单栏项目、告警和首页模块；按 `Esc` 回到首页。
+1. 点菜单栏里的 Monitto 打开面板。
+2. 鼠标停在图表或数值上，查看具体数据和说明。
+3. 在面板里按 `⌘,` 打开设置，按 `Esc` 回到首页，按 `⌘R` 立即刷新。
 
 ## 数据与隐私
 
-Moni 的系统指标直接在本机采样。软件更新需要访问外部服务；请求失败不会阻断基础系统监控。
+系统指标都在本机读取，不会上传。Monitto 只在检查更新时联网，检查失败也不影响监控。
 
-每项数据的来源、口径、稳定性与采样频率都记录在 [数据源审计清单](docs/DATA_SOURCE_AUDIT.md) 中。
+每项数据从哪来、怎么算、多久采一次，见 [数据源审计清单](docs/DATA_SOURCE_AUDIT.md)。
 
 ## 从源码构建
 
-准备 Xcode 26.6，然后运行：
+需要 Xcode 26.6：
 
 ```bash
-git clone https://github.com/Seaony/Moni.git
-cd Moni
+git clone https://github.com/Seaony/Monitto.git
+cd Monitto
 xcodebuild \
-  -project Moni.xcodeproj \
-  -scheme Moni \
+  -project Monitto.xcodeproj \
+  -scheme Monitto \
   -configuration Debug \
   -derivedDataPath "$PWD/DerivedData" \
   build
-open DerivedData/Build/Products/Debug/Moni.app
+open DerivedData/Build/Products/Debug/Monitto.app
 ```
 
-项目包含以下主要目录：
+目录：
 
 ```text
-Moni/          macOS 应用、页面、数据模型与采样服务
-Shared/        本地化能力与语言资源
-scripts/       构建验证与发布脚本
-docs/          数据源审计与发布说明
+Monitto/   App 代码：页面、数据模型和采样服务
+Shared/    本地化
+scripts/   发版配置和 DMG 安装窗口
+docs/      数据源审计和发版说明
+design/    图标源文件和历次候选
 ```
 
-## 发布
-
-未配置 Developer ID 与 Apple 公证凭据时，可从干净且已推送的 `master` 发布未签名版本：
-
-```bash
-~/.agents/skills/mac-release/scripts/mac-release 1.2.3
-```
-
-这是所有 App 共用的发版脚本（全局技能 `mac-release`），Moni 的配置在 `scripts/release-config.sh`。脚本会构建通用应用、生成 ZIP/DMG、签名 Sparkle appcast、创建版本标签并发布 GitHub Release。完整前置条件和签名发布流程请阅读 [发布说明](docs/RELEASING.md)。
-
-## 技术栈
-
-- Swift 5、SwiftUI、AppKit
-- Sparkle 应用内更新
-- Core Graphics、Core WLAN、SystemConfiguration、Metal、IOKit 与 Darwin 系统接口
-- GitHub Actions 构建与发布
-
----
-
-<div align="center">
-  <sub>让重要指标留在视线里，而不是藏在十几个系统面板中。</sub>
-</div>
+发版流程见 [发版说明](docs/RELEASING.md)。
