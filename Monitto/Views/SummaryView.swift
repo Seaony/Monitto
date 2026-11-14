@@ -5,6 +5,7 @@ struct SummaryView: View {
 
     @EnvironmentObject private var monitor: SystemMonitor
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(PreferenceKey.appLanguage) private var appLanguage = AppLanguage.english.rawValue
     @AppStorage(PreferenceKey.summaryCardLayout) private var cardLayoutData = Data()
     @AppStorage(PreferenceKey.summaryGridDensity) private var gridDensityValue = SummaryGridDensity.comfortable.rawValue
     @AppStorage(PreferenceKey.showHost) private var showHost = true
@@ -22,6 +23,10 @@ struct SummaryView: View {
     @State private var cardDragPreview: DashboardCardDragPreview?
 
     private var snapshot: SystemSnapshot { monitor.snapshot }
+
+    private var language: AppLanguage {
+        AppLanguage(rawValue: appLanguage) ?? .english
+    }
 
     private var gridDensity: SummaryGridDensity {
         SummaryGridDensity(rawValue: gridDensityValue) ?? .comfortable
@@ -174,7 +179,7 @@ struct SummaryView: View {
                     VStack(spacing: 9) {
                         hostHardwareGrid
                         hostLoadRow
-                        MetricRow(label: "Processes", value: snapshot.processes.count.formatted(), color: MonittoPalette.purple, helpText: "Number of processes currently reported by macOS.")
+                        MetricRow(label: "Processes", value: snapshot.processes.count.formatted(.number.locale(language.locale)), color: MonittoPalette.purple, helpText: "Number of processes currently reported by macOS.")
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -200,7 +205,7 @@ struct SummaryView: View {
                     hostHardwareGrid
                 }
                 hostLoadRow
-                MetricRow(label: "Processes", value: snapshot.processes.count.formatted(), color: MonittoPalette.purple, helpText: "Number of processes currently reported by macOS.")
+                MetricRow(label: "Processes", value: snapshot.processes.count.formatted(.number.locale(language.locale)), color: MonittoPalette.purple, helpText: "Number of processes currently reported by macOS.")
             }
         }
     }
@@ -276,14 +281,15 @@ struct SummaryView: View {
     }
 
     private var hostOperatingSystemLabel: String {
-        let version = ProcessInfo.processInfo.operatingSystemVersion
-        let versionNumber = "\(version.majorVersion).\(version.minorVersion).\(version.patchVersion)"
-        let releaseName = version.majorVersion == 26 ? "Tahoe" : "macOS"
-        return "\(releaseName) \(versionNumber)"
+        MonittoSystemInfo.versionDescription(language: language)
     }
 
     private var hostChipLabel: String {
-        snapshot.host.chip.replacingOccurrences(of: "Apple ", with: "")
+        let chip = snapshot.host.chip
+        if chip == "Apple Silicon" {
+            return MonittoLocalization.string("Apple silicon")
+        }
+        return chip.replacingOccurrences(of: "Apple ", with: "")
     }
 
     private var cpuCard: some View {
@@ -291,7 +297,7 @@ struct SummaryView: View {
             title: "CPU",
             symbol: "cpu",
             color: MonittoPalette.pink,
-            trailing: "\(snapshot.host.processorCount) cores",
+            trailing: MonittoLocalization.format("%@ cores", snapshot.host.processorCount.formatted(.number.locale(language.locale))),
             trailingHelp: "Number of logical CPU cores available to macOS."
         ) {
             HStack(alignment: .bottom, spacing: 12) {
@@ -346,7 +352,7 @@ struct SummaryView: View {
                 InteractiveSparkline(
                     series: [
                         InteractiveSparklineSeries(
-                            name: "Memory",
+                            name: MonittoLocalization.string("Memory"),
                             values: monitor.memoryHistory,
                             color: MonittoPalette.blue,
                             showsFill: true,
@@ -393,7 +399,7 @@ struct SummaryView: View {
             title: "GPU",
             symbol: "display",
             color: MonittoPalette.green,
-            trailing: "\(snapshot.gpuDevices.count) device\(snapshot.gpuDevices.count == 1 ? "" : "s")",
+            trailing: MonittoLocalization.format("%@ %@", snapshot.gpuDevices.count.formatted(.number.locale(language.locale)), MonittoLocalization.string(snapshot.gpuDevices.count == 1 ? "device" : "devices")),
             trailingHelp: "Number of GPU devices detected by macOS."
         ) {
             HStack(alignment: .bottom, spacing: 12) {
@@ -403,7 +409,7 @@ struct SummaryView: View {
                     Text(MonittoLocalization.string(snapshot.gpu.utilizationPercent.map(percent) ?? "No Data"))
                         .font(.system(size: 30, weight: .bold, design: .rounded))
                         .help("Current overall GPU utilization reported by macOS.")
-                    Text(snapshot.gpuDevices.first?.name ?? snapshot.host.chip)
+                    Text(snapshot.gpuDevices.first?.name ?? hostChipLabel)
                         .font(.system(size: 11.5))
                         .foregroundStyle(MonittoPalette.foregroundSecondary)
                         .lineLimit(1)
@@ -463,14 +469,14 @@ struct SummaryView: View {
                 InteractiveSparkline(
                     series: [
                         InteractiveSparklineSeries(
-                            name: "Download",
+                            name: MonittoLocalization.string("Download"),
                             values: monitor.downloadHistory,
                             color: MonittoPalette.cyan,
                             showsFill: true,
                             formatValue: rate
                         ),
                         InteractiveSparklineSeries(
-                            name: "Upload",
+                            name: MonittoLocalization.string("Upload"),
                             values: monitor.uploadHistory,
                             color: MonittoPalette.orange,
                             formatValue: rate
@@ -495,7 +501,7 @@ struct SummaryView: View {
                         .lineLimit(1)
                         .help("Primary network interface and physical Wi-Fi mode.")
                     Spacer(minLength: 4)
-                    Text("\(snapshot.network.interfaces.filter(\.isActive).count) active")
+                    Text(MonittoLocalization.format("%@ active", snapshot.network.interfaces.filter(\.isActive).count.formatted(.number.locale(language.locale))))
                         .foregroundStyle(MonittoPalette.foregroundTertiary)
                         .help("Number of network interfaces currently marked active.")
                 }
@@ -533,7 +539,7 @@ struct SummaryView: View {
             title: "Storage",
             symbol: "internaldrive",
             color: MonittoPalette.orange,
-            trailing: "\(snapshot.volumes.count) volumes",
+            trailing: MonittoLocalization.format("%@ %@", snapshot.volumes.count.formatted(.number.locale(language.locale)), MonittoLocalization.string(snapshot.volumes.count == 1 ? "volume" : "volumes")),
             trailingHelp: "Number of currently mounted storage volumes."
         ) {
             if snapshot.volumes.isEmpty {
@@ -568,17 +574,17 @@ struct SummaryView: View {
                     .fontWeight(.bold)
                     .foregroundStyle(volume.usedPercent >= 90 ? MonittoPalette.red : MonittoPalette.green)
                     .monittoNumericTransition(volume.usedPercent)
-                    .help("Percentage of \(volume.mountPath) currently used.")
+                    .help(MonittoLocalization.format("Percentage of %@ currently used.", volume.mountPath))
             }
             ProgressView(value: volume.usedPercent, total: 100)
                 .tint(volume.usedPercent >= 90 ? MonittoPalette.red : MonittoPalette.orange)
                 .monittoAnimation(MonittoMotion.data, value: volume.usedPercent)
             HStack(spacing: 3) {
                 Text(bytes(UInt64(volume.usedBytes)))
-                    .help("Storage currently used on \(volume.mountPath).")
+                    .help(MonittoLocalization.format("Storage currently used on %@.", volume.mountPath))
                 Text("/")
                 Text(bytes(UInt64(volume.totalBytes)))
-                    .help("Total storage capacity of \(volume.mountPath).")
+                    .help(MonittoLocalization.format("Total storage capacity of %@.", volume.mountPath))
                 Text("used")
             }
                 .font(.system(size: 10.5))
@@ -596,7 +602,7 @@ struct SummaryView: View {
             title: "Processes",
             symbol: "list.bullet.rectangle",
             color: MonittoPalette.purple,
-            trailing: snapshot.processes.count.formatted(),
+            trailing: snapshot.processes.count.formatted(.number.locale(language.locale)),
             trailingHelp: "Number of processes currently reported by macOS."
         ) {
             LazyVGrid(
@@ -633,11 +639,11 @@ struct SummaryView: View {
                 Spacer(minLength: 4)
                 Text("\(percent(process.cpuPercent)) CPU")
                     .monospacedDigit()
-                    .help("Current CPU share used by \(process.name).")
-                Text("\(percent(memoryPercent)) MEM")
+                    .help(MonittoLocalization.format("Current CPU share used by %@.", process.name))
+                Text(MonittoLocalization.format("%@ MEM", percent(memoryPercent)))
                     .monospacedDigit()
                     .foregroundStyle(MonittoPalette.foregroundSecondary)
-                    .help("Share of total physical memory used by \(process.name).")
+                    .help(MonittoLocalization.format("Share of total physical memory used by %@.", process.name))
             }
             HStack(spacing: 6) {
                 ProgressView(value: min(100, process.cpuPercent), total: 100)
@@ -669,7 +675,7 @@ struct SummaryView: View {
                 InteractiveSparkline(
                     series: [
                         InteractiveSparklineSeries(
-                            name: "CPU die",
+                            name: MonittoLocalization.string("CPU die"),
                             values: monitor.cpuTemperatureHistory,
                             color: MonittoPalette.orange,
                             showsFill: true,
@@ -688,7 +694,7 @@ struct SummaryView: View {
                 powerStat("Fan", snapshot.power.fans.first.map { String(format: "%.0f rpm", $0.revolutionsPerMinute) } ?? "—", help: "Rotation speed of the first detected cooling fan.")
                 powerStat("Cycles", snapshot.power.cycleCount.map(String.init) ?? "—", help: "Number of completed battery charge cycles.")
                 powerStat("Power draw", snapshot.power.systemPowerWatts.map { String(format: "%.1f W", $0) } ?? "—", help: "Estimated electrical power currently consumed by the system.")
-                powerStat("Health", snapshot.power.batteryHealth ?? "—", color: batteryHealthColor, help: "Battery condition reported by macOS.")
+                powerStat("Health", MonittoLocalization.string(snapshot.power.batteryHealth ?? "—"), color: batteryHealthColor, help: "Battery condition reported by macOS.")
             }
             .frame(maxHeight: .infinity, alignment: .bottomLeading)
         }
@@ -872,11 +878,11 @@ struct SummaryView: View {
     }
 
     private func bytes(_ value: UInt64) -> String {
-        ByteCountFormatter.string(fromByteCount: Int64(clamping: value), countStyle: .memory)
+        MonittoByteFormatting.string(Int64(clamping: value), style: .memory, locale: language.locale)
     }
 
     private func rate(_ value: Double) -> String {
-        "\(ByteCountFormatter.string(fromByteCount: Int64(max(0, value)), countStyle: .decimal))/s"
+        "\(MonittoByteFormatting.string(Int64(max(0, value)), style: .decimal, locale: language.locale))/s"
     }
 
     private func formatUptime(_ interval: TimeInterval) -> String {

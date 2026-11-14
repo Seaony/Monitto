@@ -140,7 +140,7 @@ struct InteractiveSparkline: View {
     private func tooltip(index: Int) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             if dates.indices.contains(index) {
-                Text(dates[index].formatted(date: .omitted, time: .standard))
+                Text(dates[index].formatted(.dateTime.hour().minute().second().locale(MonittoLocalization.currentLanguage.locale)))
                     .font(.system(size: 10.5, weight: .semibold))
                     .foregroundStyle(MonittoPalette.foregroundSecondary)
                     .monospacedDigit()

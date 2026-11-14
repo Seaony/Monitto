@@ -336,7 +336,7 @@ struct HostDetails: Sendable {
     var name = ProcessInfo.processInfo.hostName
     var model = "Mac"
     var chip = "Apple Silicon"
-    var operatingSystem = ProcessInfo.processInfo.operatingSystemVersionString
+    var operatingSystem = MonittoSystemInfo.versionDescription(language: .english)
     var kernel = "Darwin"
     var uptime: TimeInterval = ProcessInfo.processInfo.systemUptime
     var loadAverages: [Double] = [0, 0, 0]
@@ -346,7 +346,7 @@ struct HostDetails: Sendable {
         name: String = ProcessInfo.processInfo.hostName,
         model: String = "Mac",
         chip: String = "Apple Silicon",
-        operatingSystem: String = ProcessInfo.processInfo.operatingSystemVersionString,
+        operatingSystem: String = MonittoSystemInfo.versionDescription(language: .english),
         kernel: String = "Darwin",
         uptime: TimeInterval = ProcessInfo.processInfo.systemUptime,
         loadAverages: [Double] = [0, 0, 0],

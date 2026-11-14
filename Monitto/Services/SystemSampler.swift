@@ -1151,7 +1151,7 @@ actor SystemSampler {
             name: SCDynamicStoreCopyComputerName(nil, nil) as String? ?? ProcessInfo.processInfo.hostName,
             model: sysctlString("hw.model") ?? "Mac",
             chip: sysctlString("machdep.cpu.brand_string") ?? "Apple Silicon",
-            operatingSystem: ProcessInfo.processInfo.operatingSystemVersionString,
+            operatingSystem: MonittoSystemInfo.versionDescription(language: .english),
             kernel: "Darwin \(release)",
             processorCount: ProcessInfo.processInfo.processorCount
         )

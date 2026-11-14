@@ -1,68 +1,86 @@
 <div align="center">
-  <img src="Monitto/Assets.xcassets/AppIcon.appiconset/AppIcon-128@2x.png" width="128" height="128" alt="Monitto 图标">
-  <h1>Monitto</h1>
-  <p>点一下菜单栏，看清这台 Mac 现在的状态。</p>
-  <p>
-    <a href="https://github.com/Seaony/Monitto/actions/workflows/build.yml"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/Seaony/Monitto/build.yml?branch=master&amp;style=flat-square&amp;label=build"></a>
-    <a href="https://github.com/Seaony/Monitto/releases/latest"><img alt="Release" src="https://img.shields.io/github/v/release/Seaony/Monitto?display_name=tag&amp;style=flat-square"></a>
-    <img alt="macOS 26.5+" src="https://img.shields.io/badge/macOS-26.5%2B-111111?style=flat-square&amp;logo=apple">
-    <img alt="Swift 5" src="https://img.shields.io/badge/Swift-5-F05138?style=flat-square&amp;logo=swift&amp;logoColor=white">
-  </p>
+
+<a href="https://github.com/Seaony/Monitto/releases/latest"><img src="docs/assets/icon-512.png" width="112" alt="Monitto"></a>
+
+# Monitto
+
+### Your Mac, at a glance.
+
+**CPU, memory, GPU, network, storage, processes, battery and temperature, in one menu bar panel.**<br>
+Keep the few numbers you care about in the menu bar,<br>
+and get a notification when one of them runs too high.
+
+![macOS 15+](https://img.shields.io/badge/macOS-15%2B-000000?logo=apple&logoColor=white) ![Swift 5](https://img.shields.io/badge/Swift-5-F05138?logo=swift&logoColor=white) ![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-0A84FF?logo=swift&logoColor=white)
+
+**[Download](https://github.com/Seaony/Monitto/releases/latest)** &nbsp;·&nbsp; **[Releasing](docs/RELEASING.md)** &nbsp;·&nbsp; **English** · [简体中文](README.zh-CN.md)
+
 </div>
 
-Monitto 是一个 macOS 菜单栏 App。CPU、内存、GPU、网络、磁盘、进程、电池和温度都收在一个弹出面板里，最关心的几项也可以直接挂在菜单栏上。
+<br>
 
-## 能做什么
+## Is Monitto for you?
 
-- **首页概览**：主机信息、CPU、内存、GPU、网络、存储、进程，以及电池、温度、风扇转速和功耗。鼠标停在图表上能看到具体数值和说明。
-- **自己排首页**：卡片可以拖动排序、调整大小，不看的模块可以关掉，布局会记住。
-- **菜单栏指标**：从 CPU、内存、网络、磁盘、电池、温度里任选几项，显示成数值、小图表或两者都显示。
-- **超限提醒**：CPU、内存、磁盘用量或 CPU 温度超过你设的阈值时，发系统通知或播放提示音。
-- **外观和语言**：浅色、深色或跟随系统；界面有英文和简体中文；整个面板可以缩放。
-- **不费电**：所有数据共用一次采样，开销大的采样在面板关闭时降频或暂停。
+When your Mac gets slow, hot or loud, the answer is spread across several places: Activity Monitor for CPU and memory, System Settings for the battery, and temperature and fan speed aren't shown anywhere.
 
-## 安装
+Monitto puts all of it in one panel under its menu bar icon:
 
-从 [Releases](https://github.com/Seaony/Monitto/releases/latest) 下载 DMG，打开后把 Monitto 拖进「应用程序」。安装包用 Developer ID 签名并经过 Apple 公证，可以直接打开；有新版本时 App 里会提示更新。
+- **See everything at once**: host, CPU, memory, GPU, network, storage and processes, plus battery, temperature, fan speed and power draw. Each is a card with a live chart; hover a chart for exact values.
+- **Arrange it your way**: drag cards to reorder them, resize them, and hide the ones you don't need.
+- **Keep key numbers in the menu bar**: pick any of CPU, memory, network, disk, battery and temperature, shown as numbers, small charts or both.
+- **Hear about it when something runs hot**: set limits for CPU load, memory, disk space and CPU temperature, and get a notification, with an optional sound.
 
-需要 macOS 26.5 或更新版本，Apple 芯片和 Intel 芯片的 Mac 都能用。
+It's for you if you want to know what your Mac is doing without opening several apps. If Activity Monitor already tells you enough, you don't need it.
 
-## 用法
+## Quick start
 
-1. 点菜单栏里的 Monitto 打开面板。
-2. 鼠标停在图表或数值上，查看具体数据和说明。
-3. 在面板里按 `⌘,` 打开设置，按 `Esc` 回到首页，按 `⌘R` 立即刷新。
+**1 · Install.** Download the DMG from the **[latest release](https://github.com/Seaony/Monitto/releases/latest)**, open it and drag `Monitto.app` into Applications.
 
-## 数据与隐私
+<sub>Builds are universal (Apple silicon and Intel) and need macOS 15 or later. Monitto updates itself from GitHub Releases through Sparkle.</sub>
 
-系统指标都在本机读取，不会上传。Monitto 只在检查更新时联网，检查失败也不影响监控。
+**2 · Open the panel.** Click the Monitto icon in the menu bar. Hover a chart or a number to see what it means; press **⌘R** to refresh.
 
-每项数据从哪来、怎么算、多久采一次，见 [数据源审计清单](docs/DATA_SOURCE_AUDIT.md)。
+**3 · Set it up.** Click **Settings ⌘,** at the bottom of the panel to choose the appearance and language, the menu bar items, alert limits and which cards to show.
 
-## 从源码构建
+## What it does
 
-需要 Xcode 26.6：
+### Lives in the menu bar
 
-```bash
+No Dock icon unless you turn it on. The panel opens under the menu bar icon and can be zoomed as a whole. Light and dark appearance, English and Simplified Chinese, launch at login and in-app updates.
+
+### Light on your Mac
+
+Every card reads from one shared sample, taken every 0.3 to 5 seconds. Costly readings slow down or pause while the panel is closed.
+
+### Where the numbers come from
+
+Most readings use public macOS interfaces. Temperatures, fan speed and power draw come from sensors Apple doesn't document, so they can be missing on some Macs. The [data source audit](docs/DATA_SOURCE_AUDIT.md) (in Chinese) lists the source of every number.
+
+## Privacy
+
+- Everything is read on your Mac and stays there. Monitto has no account and no analytics.
+- It goes online only to check Monitto's GitHub Releases feed for updates; if that fails, monitoring keeps working.
+- Settings are kept in macOS user defaults. The only file Monitto writes is the diagnostics report you export yourself.
+
+## Build from source
+
+You need Xcode 26.6.
+
+```sh
 git clone https://github.com/Seaony/Monitto.git
 cd Monitto
-xcodebuild \
-  -project Monitto.xcodeproj \
-  -scheme Monitto \
-  -configuration Debug \
-  -derivedDataPath "$PWD/DerivedData" \
-  build
+xcodebuild -project Monitto.xcodeproj -scheme Monitto -configuration Debug \
+  -derivedDataPath "$PWD/DerivedData" build
 open DerivedData/Build/Products/Debug/Monitto.app
 ```
 
-目录：
+See [docs/RELEASING.md](docs/RELEASING.md) for releases.
 
-```text
-Monitto/   App 代码：页面、数据模型和采样服务
-Shared/    本地化
-scripts/   发版配置和 DMG 安装窗口
-docs/      数据源审计和发版说明
-design/    图标源文件和历次候选
-```
+## Acknowledgements
 
-发版流程见 [发版说明](docs/RELEASING.md)。
+Updates use [Sparkle](https://sparkle-project.org/).
+
+---
+
+<div align="center">
+  <sub>How your Mac is doing, one click away.</sub>
+</div>

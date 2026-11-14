@@ -10,13 +10,16 @@ import SwiftUI
 
 @main
 struct MonittoApp: App {
+    @NSApplicationDelegateAdaptor(MonittoAppDelegate.self) private var appDelegate
+    @Environment(\.openSettings) private var openSettings
     @StateObject private var monitor = SystemMonitor()
     @StateObject private var updates = UpdateController()
     @AppStorage(PreferenceKey.appLanguage) private var appLanguage = AppLanguage.english.rawValue
 
     var body: some Scene {
+        let _ = appDelegate.configure(monitor: monitor) { openSettings() }
         MenuBarExtra {
-            ContentView()
+            ContentView(onOpenSettings: appDelegate.openSettings)
                 .environmentObject(monitor)
                 .environmentObject(updates)
                 .background(
@@ -28,7 +31,21 @@ struct MonittoApp: App {
             MenuBarStatusLabel(monitor: monitor)
         }
         .menuBarExtraStyle(.window)
+        Settings {
+            SettingsView()
+                .environmentObject(monitor)
+                .environmentObject(updates)
+                .background(SettingsWindowRegistration(appDelegate: appDelegate))
+                .containerBackground(MonittoSettingsTheme.background, for: .window)
+        }
+        .windowResizability(.contentSize)
         .commands {
+            CommandGroup(replacing: .appSettings) {
+                Button(MonittoLocalization.string("Settings…", language: selectedLanguage)) {
+                    appDelegate.openSettings()
+                }
+                .keyboardShortcut(",", modifiers: .command)
+            }
             CommandGroup(after: .appInfo) {
                 CheckForUpdatesCommand(updateController: updates)
             }
@@ -123,7 +140,7 @@ private struct MenuBarStatusLabel: View {
 
     private func menuBarTag(_ metric: MenuBarMetric) -> String {
         switch metric {
-        case .temperature: "TMP"
+        case .temperature: MonittoLocalization.string("Temp", language: selectedLanguage)
         default: String(metric.title.prefix(3)).uppercased()
         }
     }
@@ -157,7 +174,7 @@ private struct MenuBarStatusLabel: View {
     }
 
     private func rate(_ value: Double) -> String {
-        ByteCountFormatter.string(fromByteCount: Int64(max(0, value)), countStyle: .decimal) + "/s"
+        MonittoByteFormatting.string(Int64(max(0, value)), style: .decimal, locale: selectedLanguage.locale) + "/s"
     }
 }
 
@@ -345,6 +362,8 @@ private final class MenuBarWindowPositioningView: NSView {
             onVisibilityChange(false)
             return
         }
+
+        MonittoAppDelegate.shared?.panelWindow = window
 
         observers.append(
             NotificationCenter.default.addObserver(
