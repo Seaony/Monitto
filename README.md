@@ -14,6 +14,10 @@ and get a notification when one of them runs too high.
 
 **[Download](https://github.com/Seaony/Monitto/releases/latest)** &nbsp;·&nbsp; **[Releasing](docs/RELEASING.md)** &nbsp;·&nbsp; **English** · [简体中文](README.zh-CN.md)
 
+<br>
+
+<img src="docs/assets/promo/monitto-hero.png" width="900" alt="Monitto's panel open under its menu bar icon, showing CPU, memory, GPU, network, storage, processes, battery and temperature">
+
 </div>
 
 <br>

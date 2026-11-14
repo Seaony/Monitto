@@ -14,6 +14,10 @@
 
 **[下载](https://github.com/Seaony/Monitto/releases/latest)** &nbsp;·&nbsp; **[发版说明](docs/RELEASING.md)** &nbsp;·&nbsp; [English](README.md) · **简体中文**
 
+<br>
+
+<img src="docs/assets/promo/monitto-hero.png" width="900" alt="Monitto 的面板在菜单栏图标下展开，显示 CPU、内存、GPU、网络、存储、进程、电池和温度">
+
 </div>
 
 <br>
