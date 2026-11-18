@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 20 16">
+<path d="M 3.1 15.15 L 5.25 12.32 M 14.75 12.32 L 16.9 15.15"
+    fill="none" stroke="black" stroke-width="1.55" stroke-linecap="round"/>
+<circle cx="10.0" cy="7.6" r="6.5"
+    fill="none" stroke="black" stroke-width="1.6"/>
+<path d="M 5.67 5.10 A 5.0 5.0 0 0 1 8.22 2.93 M 10.08 2.60 A 5.0 5.0 0 0 1 14.33 5.10" fill="none" stroke="black" stroke-width="1.6"/>
+<path d="M 7.90 9.35 Q 7.65 11.72 8.20 12.17 M 11.90 9.35 Q 10.88 10.50 11.43 10.95" fill="none" stroke="black" stroke-width="1.7" stroke-linecap="round"/>
+<path fill="black" fill-rule="evenodd" transform="translate(0 0.05)" d="
+    M 6.9 10.25
+    C 5.8 9.7 5.8 8.45 6.55 7.55
+    C 7.1 6.8 8.1 6.4 9.2 6.43
+    C 8.8 5.37 9.4 4.68 10.24 4.73
+    C 11.14 4.79 11.52 5.5 11.31 6.32
+    C 12.48 6.19 13.19 6.97 13.4 7.9
+    C 14 7.9 14.28 8.42 13.92 8.92
+    C 13.52 9.5 12.68 9.75 11.8 9.72
+    C 10.55 10.63 8.05 10.78 6.9 10.25 Z
+    M 11.85 7.05
+    a .79 .79 0 1 0 0 1.58
+    a .79 .79 0 1 0 0 -1.58 Z"/>
+</svg>

@@ -5,7 +5,7 @@ enum PreferenceKey {
     static let appearance = "appearance"
     static let compactMenuBar = "compactMenuBar"
     static let menuBarItems = "menuBarItems"
-    static let menuBarDisplayStyle = "menuBarDisplayStyle"
+    static let menuBarItemStyles = "menuBarItemStyles"
     static let showDockIcon = "showDockIcon"
     static let launchAtLogin = "launchAtLogin"
     static let menuBarMetric = "menuBarMetric"
@@ -66,7 +66,7 @@ enum MenuBarMetric: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    func title(language: AppLanguage) -> String {
         let key: String = switch self {
         case .cpu: "CPU"
         case .memory: "Memory"
@@ -75,7 +75,7 @@ enum MenuBarMetric: String, CaseIterable, Identifiable {
         case .battery: "Battery"
         case .temperature: "Temp"
         }
-        return MonittoLocalization.string(key)
+        return MonittoLocalization.string(key, language: language)
     }
 
     var symbol: String {
@@ -88,19 +88,89 @@ enum MenuBarMetric: String, CaseIterable, Identifiable {
         case .temperature: "thermometer.medium"
         }
     }
+
+    static func selectedItems(_ storedItems: String, fallback: String) -> [Self] {
+        let ids = Set(storedItems.split(separator: ",").map(String.init))
+        let items = allCases.filter { ids.contains($0.rawValue) }
+        return items.isEmpty ? [Self(rawValue: fallback) ?? .cpu] : items
+    }
+
+    var defaultRunner: MenuBarRunner? {
+        switch self {
+        case .cpu: .cat
+        case .memory: .hamster
+        case .network: .bunny
+        case .disk, .battery, .temperature: nil
+        }
+    }
 }
 
-enum MenuBarDisplayStyle: String, CaseIterable, Identifiable {
-    case valueOnly, graphOnly, graphAndValue
+enum MenuBarDisplayStyle: String, CaseIterable {
+    case value, graph, graphValue, runner, runnerValue
 
-    var id: String { rawValue }
+    var showsRunner: Bool { self == .runner || self == .runnerValue }
+    var showsGraph: Bool { self == .graph || self == .graphValue }
+    var showsValue: Bool { self != .graph && self != .runner }
 
-    var title: String {
+    func title(language: AppLanguage) -> String {
         let key: String = switch self {
-        case .valueOnly: "Value only"
-        case .graphOnly: "Graph only"
-        case .graphAndValue: "Graph + value"
+        case .value: "Value"
+        case .graph: "Graph"
+        case .graphValue: "Graph + value"
+        case .runner: "Character"
+        case .runnerValue: "Character + value"
         }
-        return MonittoLocalization.string(key)
+        return MonittoLocalization.string(key, language: language)
+    }
+}
+
+enum MenuBarRunner: String, CaseIterable {
+    case cat, hamster, penguin, bunny
+
+    var frameCount: Int { self == .penguin ? 8 : 6 }
+
+    func title(language: AppLanguage) -> String {
+        MonittoLocalization.string(rawValue.capitalized, language: language)
+    }
+}
+
+struct MenuBarItemStyles {
+    struct Item {
+        var style: MenuBarDisplayStyle
+        var runner: MenuBarRunner?
+    }
+
+    private var items: [MenuBarMetric: Item] = [:]
+
+    init(_ rawValue: String) {
+        for entry in rawValue.split(separator: ",") {
+            let pair = entry.split(separator: "=", maxSplits: 1)
+            guard pair.count == 2, let metric = MenuBarMetric(rawValue: String(pair[0])) else { continue }
+            let parts = pair[1].split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+            let style = MenuBarDisplayStyle(rawValue: String(parts[0]))
+            let runner = parts.count == 2 ? MenuBarRunner(rawValue: String(parts[1])) : nil
+            let defaults = Self.defaults(for: metric)
+            items[metric] = Item(
+                style: style.flatMap { $0.showsRunner && defaults.runner == nil ? nil : $0 } ?? defaults.style,
+                runner: defaults.runner.flatMap { runner ?? $0 }
+            )
+        }
+    }
+
+    subscript(metric: MenuBarMetric) -> Item {
+        get { items[metric] ?? Self.defaults(for: metric) }
+        set { items[metric] = newValue }
+    }
+
+    var rawValue: String {
+        MenuBarMetric.allCases.compactMap { metric in
+            guard let item = items[metric] else { return nil }
+            let runner = item.runner.map { ":\($0.rawValue)" } ?? ""
+            return "\(metric.rawValue)=\(item.style.rawValue)\(runner)"
+        }.joined(separator: ",")
+    }
+
+    private static func defaults(for metric: MenuBarMetric) -> Item {
+        Item(style: metric == .cpu ? .runnerValue : .value, runner: metric.defaultRunner)
     }
 }
