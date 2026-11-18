@@ -26,6 +26,11 @@ struct MenuBarStatusLabel: View {
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
                 overlays.update(renderer, isPaused: playback.isPaused)
             }
+            .onReceive(NotificationCenter.default.publisher(for: NSWindow.didChangeScreenNotification)) { notification in
+                if overlays.ownsButton(in: notification.object as? NSWindow) {
+                    overlays.update(renderer, isPaused: playback.isPaused)
+                }
+            }
             .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.activeSpaceDidChangeNotification)) { _ in
                 overlays.update(renderer, isPaused: playback.isPaused)
             }
@@ -245,6 +250,11 @@ private final class MenuBarStatusOverlays {
     private var views: [ObjectIdentifier: MenuBarRunnerOverlayView] = [:]
     private var pendingUpdate: DispatchWorkItem?
 
+    func ownsButton(in window: NSWindow?) -> Bool {
+        guard let window else { return false }
+        return button?.window === window
+    }
+
     func update(_ renderer: MenuBarGraphRenderer, isPaused: Bool) {
         pendingUpdate?.cancel()
         // 标签尺寸由 SwiftUI 写进按钮，下一轮主线程再对齐图层。
@@ -303,7 +313,10 @@ private final class MenuBarStatusOverlays {
                 width: renderer.size.width,
                 height: renderer.size.height
             )
-            overlay.update(renderer.placements, isPaused: isPaused)
+            // 承载按钮的原窗口随菜单栏焦点移动，其余窗口显示系统复制出来的菜单栏。
+            let surface: MenuBarRunnerSurface = root === button && primary.screen != nil
+                ? .activeMenuBar : .inactiveMenuBar
+            overlay.update(renderer.placements, isPaused: isPaused, surface: surface)
         }
     }
 

@@ -117,6 +117,10 @@ struct MenuBarRunnerPlacement: Equatable {
     let framesPerSecond: Double
 }
 
+enum MenuBarRunnerSurface {
+    case preview, activeMenuBar, inactiveMenuBar
+}
+
 struct MenuBarRunnerOverlay: NSViewRepresentable {
     let placements: [MenuBarRunnerPlacement]
     let isPaused: Bool
@@ -132,6 +136,7 @@ struct MenuBarRunnerOverlay: NSViewRepresentable {
 
 final class MenuBarRunnerOverlayView: NSView {
     private var sprites: [MenuBarMetric: MenuBarRunnerLayer] = [:]
+    private var surface = MenuBarRunnerSurface.preview
 
     init() {
         super.init(frame: .zero)
@@ -143,7 +148,12 @@ final class MenuBarRunnerOverlayView: NSView {
 
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
-    func update(_ placements: [MenuBarRunnerPlacement], isPaused: Bool) {
+    func update(
+        _ placements: [MenuBarRunnerPlacement],
+        isPaused: Bool,
+        surface: MenuBarRunnerSurface = .preview
+    ) {
+        self.surface = surface
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         let present = Set(placements.map(\.metric))
@@ -159,7 +169,7 @@ final class MenuBarRunnerOverlayView: NSView {
                 sprites[placement.metric] = sprite
                 layer?.addSublayer(sprite)
             }
-            sprite.update(placement, scale: scale, tint: tint, isPaused: isPaused)
+            sprite.update(placement, scale: scale, tint: tint, isPaused: isPaused, surface: surface)
         }
         CATransaction.commit()
     }
@@ -169,7 +179,7 @@ final class MenuBarRunnerOverlayView: NSView {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         let tint = templateColor
-        for sprite in sprites.values { sprite.backgroundColor = tint }
+        for sprite in sprites.values { sprite.updateTint(tint, surface: surface) }
         CATransaction.commit()
     }
 
@@ -192,6 +202,8 @@ private final class MenuBarRunnerLayer: CALayer {
     private let frameLayer = CALayer()
     private var runner: MenuBarRunner?
     private var scale: CGFloat = 0
+    private var runningTint: CGColor?
+    private var parkedPhase: CFTimeInterval?
 
     override init() {
         super.init()
@@ -211,17 +223,47 @@ private final class MenuBarRunnerLayer: CALayer {
         frameLayer.contentsGravity = .resize
     }
 
-    func update(_ placement: MenuBarRunnerPlacement, scale: CGFloat, tint: CGColor, isPaused: Bool) {
+    func update(
+        _ placement: MenuBarRunnerPlacement,
+        scale: CGFloat,
+        tint: CGColor,
+        isPaused: Bool,
+        surface: MenuBarRunnerSurface
+    ) {
         let size = MenuBarRunnerFrames.images[placement.runner]![0].size
         frame = CGRect(origin: CGPoint(x: placement.origin, y: 0), size: size)
         frameLayer.frame = bounds
-        backgroundColor = tint
+        updateTint(tint, surface: surface)
         if runner != placement.runner {
             runner = placement.runner
             self.scale = 0
         }
         updateScale(scale)
-        updatePlayback(speed: isPaused ? 0 : Float(placement.framesPerSecond))
+        updatePlayback(
+            speed: isPaused ? 0 : Float(placement.framesPerSecond),
+            showFirstFrame: surface == .inactiveMenuBar
+        )
+    }
+
+    func updateTint(_ tint: CGColor, surface: MenuBarRunnerSurface) {
+        // 同一块深色菜单栏的两个图标扣除背景后，失焦与聚焦的线性亮度比为 0.38、0.33。
+        // 系统复制菜单栏时读模型图层。模型保留暗色，实时显示用动画图层的正常颜色。
+        let modelTint = surface == .preview ? tint : tint.copy(alpha: tint.alpha * 0.36)
+        if backgroundColor != modelTint { backgroundColor = modelTint }
+        let liveTint = surface == .activeMenuBar ? tint : nil
+        guard runningTint != liveTint else { return }
+        runningTint = liveTint
+        if let liveTint {
+            let color = CABasicAnimation(keyPath: "backgroundColor")
+            color.fromValue = liveTint
+            color.toValue = liveTint
+            color.duration = 1
+            color.fillMode = .both
+            color.isRemovedOnCompletion = false
+            add(color, forKey: "activeMenuBarTint")
+        } else {
+            removeAnimation(forKey: "activeMenuBarTint")
+        }
     }
 
     func updateScale(_ scale: CGFloat) {
@@ -245,12 +287,21 @@ private final class MenuBarRunnerLayer: CALayer {
         frameLayer.add(animation, forKey: "runnerFrames")
     }
 
-    private func updatePlayback(speed: Float) {
-        guard frameLayer.speed != speed else { return }
+    private func updatePlayback(speed: Float, showFirstFrame: Bool) {
         let now = CACurrentMediaTime()
         let phase = (now - frameLayer.beginTime) * Double(frameLayer.speed) + frameLayer.timeOffset
+        if showFirstFrame {
+            guard parkedPhase == nil else { return }
+            parkedPhase = phase
+            frameLayer.speed = 0
+            frameLayer.timeOffset = 0
+            return
+        }
+
+        guard frameLayer.speed != speed || parkedPhase != nil else { return }
         frameLayer.beginTime = now
-        frameLayer.timeOffset = phase
+        frameLayer.timeOffset = parkedPhase ?? phase
         frameLayer.speed = speed
+        parkedPhase = nil
     }
 }
